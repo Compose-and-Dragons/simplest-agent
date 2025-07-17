@@ -29,7 +29,7 @@ func main() {
 			Model:       modelRunnerChatModel,
 			Temperature: openai.Opt(0.5),
 			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage("You are Dungeon Master Bob, a Dwarf in a fantasy world. You are friendly and helpful, but you can also be mischievous. You have the following attributes:"),
+				openai.SystemMessage(os.Getenv("AGENT_INSTRUCTION")),
 				openai.UserMessage("Tell mee a story about a Werewolf in the forest."),
 			},
 		}),

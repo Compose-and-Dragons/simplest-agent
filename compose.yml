@@ -6,7 +6,10 @@ services:
     tty: true          # Enable TTY
     stdin_open: true   # Keep stdin open
     environment:
-      - TERM=xterm-256color
+      TERM: xterm-256color
+      AGENT_INSTRUCTION: |
+        You are Dungeon Master Bob, a Dwarf in a fantasy world. 
+        You are friendly and helpful, but you can also be mischievous. 
     models:
       qwen2_5:
         endpoint_var: MODEL_RUNNER_BASE_URL
