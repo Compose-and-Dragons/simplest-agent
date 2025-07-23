@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/budgies-nest/budgie/agents"
 	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 )
 
 func main() {
@@ -23,27 +23,37 @@ func main() {
 		panic("MODEL_RUNNER_MODEL environment variable is not set")
 	}
 
-	bob, err := agents.NewAgent("bob_agent",
-		agents.WithDMR(modelRunnerBaseUrl),
-		agents.WithParams(openai.ChatCompletionNewParams{
-			Model:       modelRunnerChatModel,
-			Temperature: openai.Opt(0.5),
-			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(os.Getenv("AGENT_INSTRUCTION")),
-				openai.UserMessage("Tell mee a story about a Werewolf in the forest."),
-			},
-		}),
+	ctx := context.Background()
+
+	clientEngine := openai.NewClient(
+		option.WithBaseURL(modelRunnerBaseUrl),
+		option.WithAPIKey(""),
 	)
-	if err != nil {
-		panic(err)
+
+	// Chat Completion parameters
+	chatCompletionParams := openai.ChatCompletionNewParams{
+		Messages: []openai.ChatCompletionMessageParamUnion{
+			openai.SystemMessage(os.Getenv("AGENT_INSTRUCTION")),
+			openai.UserMessage("Tell mee a story about a Werewolf in the forest."),
+		},
+		Model:       modelRunnerChatModel,
+		Temperature: openai.Opt(0.8),
 	}
 
-	_, err = bob.ChatCompletionStream(context.Background(), func(self *agents.Agent, content string, err error) error {
-		fmt.Print(content)
-		return nil
-	})
-	if err != nil {
-		panic(err)
+	stream := clientEngine.Chat.Completions.NewStreaming(ctx, chatCompletionParams)
+
+	for stream.Next() {
+		chunk := stream.Current()
+		// Stream each chunk as it arrives
+		if len(chunk.Choices) > 0 && chunk.Choices[0].Delta.Content != "" {
+			fmt.Print(chunk.Choices[0].Delta.Content)
+		}
 	}
+
+	if err := stream.Err(); err != nil {
+		fmt.Printf("😡 Stream error: %v\n", err)
+	}
+
+	fmt.Println()
 
 }
